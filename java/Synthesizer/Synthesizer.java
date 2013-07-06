@@ -11,6 +11,8 @@ import javax.sound.sampled.*;
 import javax.swing.*;
 import javax.swing.event.*;
 
+
+
 class Synthesizer extends Frame implements LineListener, ChangeListener {
 
     static final String windowName =
@@ -19,6 +21,11 @@ class Synthesizer extends Frame implements LineListener, ChangeListener {
     public JSlider sliderRatio;
     public JSlider sliderIntensity;
     public JSlider sliderFrequency;
+    public JSlider sliderVolume;
+    public JLabel labelRatio;
+    public JLabel labelIntensity;
+    public JLabel labelFrequency;
+    public JLabel labelVolume;
 
     public Synthesizer() {
         super(windowName);
@@ -29,19 +36,42 @@ class Synthesizer extends Frame implements LineListener, ChangeListener {
         panel.setLayout(new GridLayout(10, 1));
         add(panel, BorderLayout.NORTH);
 
+        labelRatio = new JLabel("Ratio:");
+        panel.add(labelRatio);
         sliderRatio = new JSlider();
         sliderRatio.addChangeListener(this);
         panel.add(sliderRatio);
 
+        labelIntensity = new JLabel("Intensity:");
+        panel.add(labelIntensity);
         sliderIntensity = new JSlider(0, 1024);
         sliderIntensity.addChangeListener(this);
         panel.add(sliderIntensity);
 
+        labelFrequency = new JLabel("Frequency:");
+        panel.add(labelFrequency);
         sliderFrequency = new JSlider(110, 2096);
         sliderFrequency.addChangeListener(this);
         panel.add(sliderFrequency);
 
+        labelVolume = new JLabel("Volume:");
+        panel.add(labelVolume);
+        sliderVolume = new JSlider(0, 100);
+        sliderVolume.addChangeListener(this);
+        panel.add(sliderVolume);
+
         setVisible(true);
+    }
+
+    // Colocar o volume master do SO no máximo.
+    public void setVolume(int percent) {
+        FloatControl volumeControl = (FloatControl) line.getControl(FloatControl.Type.VOLUME); // MASTER_GAIN or VOLUME
+        // System.out.println("Máximo: " + volumeControl.getMaximum());
+        
+        volume = (int) (((float) volumeControl.getMaximum()) * ((float) percent) / 100.0);
+        // System.out.println("Volume: " + volume);
+
+        volumeControl.setValue(volume);
     }
 
     public void stateChanged(ChangeEvent e) {
@@ -54,7 +84,13 @@ class Synthesizer extends Frame implements LineListener, ChangeListener {
         if (e.getSource() == sliderFrequency) {
             freq = sliderFrequency.getValue();
         }
-        System.out.println("M:C Ratio * 10 = " + MCratio + " | Intensity = " + intensity + " | Frequency = " + freq);
+        if (e.getSource() == sliderVolume) {
+            setVolume(sliderVolume.getValue());
+        }
+        System.out.println("M:C Ratio * 10 = " + MCratio 
+                + " | Intensity = " + intensity 
+                + " | Frequency = " + freq
+                + " | Volume = " + volume);
     }
 
     public static void main(String args[]) {
@@ -70,6 +106,7 @@ class Synthesizer extends Frame implements LineListener, ChangeListener {
 
         fm.process();
     }
+    
     public byte buffer[];
     public int bufferSize = 4096;
     public int time = 0;
@@ -77,15 +114,17 @@ class Synthesizer extends Frame implements LineListener, ChangeListener {
     public final int TABLE_SIZE = 1024;
     public int rate = 44100;
     public int freq = 440;
+    public int volume = 50;
     public int span = rate / freq;
     public int fraction = (TABLE_SIZE / span);  // VELOCITY IN TABLE ENTRIES
-    // public byte modulator;
-    public int modulator;
+    public byte modulator;
+    // public int modulator;
     public int intensity = 512;
     public int MCratio = 50;
-    // public byte oscilator;
-    public int oscilator;
+    public byte oscilator;
+    // public int oscilator;
     public SourceDataLine line;
+    // public int value;
     public int value;
 
     public void init() {
@@ -97,6 +136,7 @@ class Synthesizer extends Frame implements LineListener, ChangeListener {
             System.out.println("Buffer is " + bufferSize);
             line.start();
         } catch (javax.sound.sampled.LineUnavailableException e) {
+            System.out.println("Erro ao carregar Javax.");
         }
         line.addLineListener(this);
         buffer = new byte[bufferSize];
@@ -129,8 +169,16 @@ class Synthesizer extends Frame implements LineListener, ChangeListener {
                 // In VHDL, we shall just use a fixed number of bits to address the table (must check that 
                 // the two's complement can access it linearly, if not, change de coding). We should also use
                 // all divisions by powers of 2, just ignoring the least significant bits.
-                modulator = table[((time * fraction * MCratio / 10) + 100000) % TABLE_SIZE];
-                oscilator = table[((time * fraction + modulator * intensity / 127) + 100000) % TABLE_SIZE];
+                try {
+                    modulator = table[((time * fraction * MCratio / 10) + 100000) % TABLE_SIZE];
+                    oscilator = table[((time * fraction + modulator * intensity / 127) + 100000) % TABLE_SIZE];                   
+                }
+                catch(ArrayIndexOutOfBoundsException e) {
+                    // System.out.println("Erro: "+ e.getMessage());
+                    // System.out.println("Modulator: "+modulator+" | table["+((time * fraction * MCratio / 10) + 100000) % TABLE_SIZE+"]");
+                    // System.out.println("Oscilator: "+oscilator+" | table["+((time * fraction + modulator * intensity / 127) + 100000) % TABLE_SIZE+"]");
+                    time = 0;
+                }
                 value = oscilator * 256; // just to increase output, which is 16bit in our computers.
                 buffer[i] = (byte) ((value >>> 8) & 0xFF);
                 buffer[i + 1] = (byte) (value & 0xFF);

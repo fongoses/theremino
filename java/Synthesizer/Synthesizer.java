@@ -1,4 +1,4 @@
-package Synthesizer;
+
 
 // fmSynthesizer
 //
@@ -13,7 +13,7 @@ import javax.swing.event.*;
 
 
 
-class Synthesizer extends Frame implements LineListener, ChangeListener {
+public class Synthesizer extends Frame implements LineListener, ChangeListener {
 
     static final String windowName =
             "fmSynthesizer base on JJFM Synthesizer";

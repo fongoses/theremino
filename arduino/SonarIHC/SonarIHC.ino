@@ -34,7 +34,7 @@ void loop()
     if(distancia > 300)
         distancia = 300;
     
-    tone(SPEAKER,distancia * 100 + 1900,DURATION);
+    //tone(SPEAKER,distancia * 100 + 1900,DURATION);
 	
 
     Serial.print("Distancia em CM: ");

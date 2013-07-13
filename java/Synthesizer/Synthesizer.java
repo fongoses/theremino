@@ -63,6 +63,7 @@ class Synthesizer extends Frame implements LineListener, ChangeListener {
 	int valueSonar1;
 	int valueSonar2;
 	int oldValueSonar1;
+	int oldValueSonar2;
 	Thread bluetoothThread;
 	int threshold1 = 1;
 	int distanciaMax = 1800;
@@ -281,38 +282,37 @@ class Synthesizer extends Frame implements LineListener, ChangeListener {
         		
             bytes_read = is.read( buffer );
             
-            if(bytes_read == 2){ 
-            	
-            	
+            if(bytes_read == 2){            	
             	if((buffer[1] & 192) == 192) {
             		//if(true){
             		/* Read bluetooth data from Sonar 1*/
-            		valueSonar1 = (buffer[0]&0xff) + ((buffer[1]&0xff)  << 8); 
+            		valueSonar1 = (buffer[0]&0xff) + (((buffer[1]&0xff)  << 8) & 0x3ff); 
             		//System.out.println("Readed Value: " + valueSonar1+ " from:"+dev.getBluetoothAddress());
-            		System.out.println("Readed Value: " + valueSonar1);
+            		System.out.println("Readed Value [1]: " + valueSonar1);
             		//Som
     		        if (Math.abs(valueSonar1*threshold1 - oldValueSonar1) < 400){
     			        if ((valueSonar1 > 0) && (valueSonar1 < distanciaMax))  freq = valueSonar1*threshold1;
     			        	oldValueSonar1 = valueSonar1*threshold1;
     		        }
-            	}else
+            	}}
+            
+            if(bytes_read == 1){ 
+            	if((buffer[1] & 192) != 192) {
             	{
             		/* Read bluetooth data from Sonar 2*/
-            		System.out.println("Readed Value: " + valueSonar1);
-            		valueSonar2 = (buffer[0]&0xff);
+            		valueSonar2 = ((buffer[0]&0xff)*100)/20;
+            		System.out.println("Readed Value [2]: " + (buffer[0]&0xff) + " volume: "+valueSonar2+" %");            		
             		//Som do sonar 2
     		        //if (Math.abs(valueSonar1*threshold1 - oldValueSonar1) < 400){
-    			     if ((valueSonar2 > 0) && (valueSonar2 < distanciaMax)){ 
-    			    	 setVolume(valueSonar2);
-    			        	
+            		//if (Math.abs(valueSonar2- oldValueSonar2) < 50){
+            		if ((valueSonar2 > 0) && (valueSonar2 < 100)){ 
+    			    	 setVolume((int) (valueSonar2));
+    			    	 
+            		//}   	
     		        }
             		
             	}
-            	
-            	
-		        
-		        
-            }
+            }}
 	        
 	        
 	        //Thread.sleep(30);	        

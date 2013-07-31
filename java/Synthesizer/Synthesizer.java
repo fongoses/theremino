@@ -66,7 +66,7 @@ class Synthesizer extends Frame implements LineListener, ChangeListener {
 	int oldValueSonar2;
 	Thread bluetoothThread;
 	int threshold1 = 1;
-	int distanciaMax = 1800;
+	int distanciaMax = 1000;
     public Synthesizer() {
         super(windowName);
         setLayout(new BorderLayout());
@@ -288,12 +288,13 @@ class Synthesizer extends Frame implements LineListener, ChangeListener {
             		/* Read bluetooth data from Sonar 1*/
             		valueSonar1 = (buffer[0]&0xff) + (((buffer[1]&0xff)  << 8) & 0x3ff); 
             		//System.out.println("Readed Value: " + valueSonar1+ " from:"+dev.getBluetoothAddress());
-            		System.out.println("Readed Value [1]: " + valueSonar1);
+            		//System.out.println("Readed Value [1]: " + valueSonar1);
             		//Som
-    		        if (Math.abs(valueSonar1*threshold1 - oldValueSonar1) < 400){
-    			        if ((valueSonar1 > 0) && (valueSonar1 < distanciaMax))  freq = valueSonar1*threshold1;
-    			        	oldValueSonar1 = valueSonar1*threshold1;
-    		        }
+    		        //if (Math.abs(valueSonar1*threshold1 - oldValueSonar1) < 400){
+    			      //  if ((valueSonar1 > 0) && (valueSonar1 < distanciaMax))  freq = valueSonar1*threshold1;
+    			      //  	oldValueSonar1 = valueSonar1*threshold1;
+    		        //}
+            		if ((valueSonar1 > 0) && (valueSonar1 < distanciaMax))freq = valueSonar1;
             	}}
             
             if(bytes_read == 1){ 
@@ -301,7 +302,7 @@ class Synthesizer extends Frame implements LineListener, ChangeListener {
             	{
             		/* Read bluetooth data from Sonar 2*/
             		valueSonar2 = ((buffer[0]&0xff)*100)/20;
-            		System.out.println("Readed Value [2]: " + (buffer[0]&0xff) + " volume: "+valueSonar2+" %");            		
+            		//System.out.println("Readed Value [2]: " + (buffer[0]&0xff) + " volume: "+valueSonar2+" %");            		
             		//Som do sonar 2
     		        //if (Math.abs(valueSonar1*threshold1 - oldValueSonar1) < 400){
             		//if (Math.abs(valueSonar2- oldValueSonar2) < 50){
@@ -315,7 +316,7 @@ class Synthesizer extends Frame implements LineListener, ChangeListener {
             }}
 	        
 	        
-	        //Thread.sleep(30);	        
+	        //Thread.sleep(10);	        
                        
           }}}  catch(Exception e){ e.printStackTrace();}
           
